@@ -1,0 +1,27 @@
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+jobs:
+  build_test:
+    name: "Build and Test"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Bootstrap integration test
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/bin
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          make integration-bootstrap
+          make deploy
+
+      - name: Run integration test
+        run: |
+          make test-integration
+          echo -e '\n\n======= manager logs =======\n\n'
+          kubectl logs -n gatekeeper-system -l control-plane=controller-manager
